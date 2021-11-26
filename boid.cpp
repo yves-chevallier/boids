@@ -13,10 +13,12 @@ Boid::Boid(Flock &flock, int x, int y,  bool isPredator) :
     isPredator(isPredator),
     shape(getShape())
 {
+    position = Vector::random();
+    velocity = Vector::random(flock.maxVelocity * 2.0, -flock.maxVelocity);
 }
 
 sf::ConvexShape Boid::getShape() {
-    int size = 3;
+    int size = 1;
     int length = 20;
     int width = 7;
     sf::ConvexShape shape;
@@ -30,6 +32,12 @@ sf::ConvexShape Boid::getShape() {
     shape.setOutlineThickness(length / 10 * size);
 
     return shape;
+}
+
+void Boid::draw(sf::RenderWindow &window) {
+    auto windowSize = window.getSize();
+    shape.setPosition(sf::Vector2f(position.x * windowSize.x, position.y * windowSize.y));
+    window.draw(shape);
 }
 
 /**

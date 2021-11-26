@@ -61,6 +61,7 @@ class Flock
     Flock(unsigned numBoids = 100);
 
     void compute();
+    void draw(sf::RenderWindow &window);
 
     void add();
     void add(double x, double y);

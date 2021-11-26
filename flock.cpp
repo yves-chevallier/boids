@@ -25,7 +25,16 @@ void Flock::each(std::function<const void(Boid &boid)> callback)
 
 void Flock::compute()
 {
-    for (auto &boid : boids) boid.compute();
+    for (auto &boid : boids) {
+        boid.compute();
+    }
+}
+
+void Flock::draw(sf::RenderWindow &window)
+{
+    for (auto &boid : boids) {
+        boid.draw(window);
+    }
 }
 
 void Flock::add() {
