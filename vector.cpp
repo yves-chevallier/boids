@@ -76,6 +76,20 @@ Vector &Vector::operator+=(Vector Vector)
     return *this;
 }
 
+Vector &Vector::operator-=(double scalar)
+{
+    x -= scalar;
+    y -= scalar;
+    return *this;
+}
+
+Vector &Vector::operator-=(Vector Vector)
+{
+    x -= Vector.x;
+    y -= Vector.y;
+    return *this;
+}
+
 double Vector::norm() const
 {
     return sqrt(x * x + y * y);
@@ -94,6 +108,15 @@ Vector &Vector::limit(double max)
     float magnitude = norm();
     if (magnitude > max)
         *this *= max / magnitude;
+    return *this;
+}
+
+Vector &Vector::rotate(double angle)
+{
+    *this = Vector(
+        x * cos(angle) - y * sin(angle),
+        x * sin(angle) + y * cos(angle)
+    );
     return *this;
 }
 
