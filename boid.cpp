@@ -37,8 +37,23 @@ sf::ConvexShape Boid::getShape() {
 
 void Boid::draw(sf::RenderWindow &window) {
     auto windowSize = window.getSize();
-    shape.setPosition(sf::Vector2f(position.x * windowSize.x, position.y * windowSize.y));
+    sf::Vector2f currentPosition = sf::Vector2f(position.x * windowSize.x, position.y * windowSize.y);
+    shape.setPosition(currentPosition);
     shape.setRotation(velocity.angle() * 180 / M_PI + 90);
+
+    tail.push_back(currentPosition);
+    if (tail.size() > flock.tailLength)
+        tail.pop_front();
+    
+    sf::LineStrip tailShape;
+    tailShape.setPointCount(tail.size());
+    tailShape.setOutlineColor(sf::Color(125, 164, 202, 150));
+    tailShape.setOutlineThickness(1);
+    for (int i = 0; i < tail.size(); i++) {
+        tailShape.setPoint(i, tail[i]);
+    }
+
+    window.draw(tailShape);
     window.draw(shape);
 }
 
@@ -143,6 +158,7 @@ void Boid::compute()
         bounce(speed() * 5.0, speed() / 5.0);
 
     velocity.limit(flock.maxVelocity);
+
     position += velocity;
 }
 

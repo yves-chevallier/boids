@@ -21,7 +21,7 @@ class Boid {
     bool isPredator;
     bool isDead;
 
-    std::deque<Vector> tail;
+    std::deque<sf::Vector2f> tail;
 
     Flock &flock; // Friend reference
 

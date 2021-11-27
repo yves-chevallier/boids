@@ -58,6 +58,8 @@ class Flock
      */
     bool wrap = false;
 
+    int tailLength = 20;
+
     Flock(unsigned numBoids = 100);
 
     void compute();
