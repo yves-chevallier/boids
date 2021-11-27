@@ -56,7 +56,7 @@ class Flock
     /**
      * How the boids would behave at the boundaries.
      */
-    bool wrap = true;
+    bool wrap = false;
 
     Flock(unsigned numBoids = 100);
 
