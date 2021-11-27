@@ -18,9 +18,10 @@ Boid::Boid(Flock &flock, int x, int y,  bool isPredator) :
 }
 
 sf::ConvexShape Boid::getShape() {
-    int size = 1;
-    int length = 20;
-    int width = 7;
+    float size = 1;
+
+    int length = 10 * size;
+    int width = length / 3;
     sf::ConvexShape shape;
     shape.setPointCount(3);
     shape.setPoint(0, sf::Vector2f(0, 0));
@@ -37,6 +38,7 @@ sf::ConvexShape Boid::getShape() {
 void Boid::draw(sf::RenderWindow &window) {
     auto windowSize = window.getSize();
     shape.setPosition(sf::Vector2f(position.x * windowSize.x, position.y * windowSize.y));
+    shape.setRotation(velocity.angle() * 180 / M_PI + 90);
     window.draw(shape);
 }
 
@@ -133,7 +135,7 @@ void Boid::compute()
     cohesion(flock.cohesionRadius, flock.cohesion);
     separation(flock.separationRadius, flock.separation);
     alignment(flock.alignmentRadius, flock.alignment);
-    fear(flock.fearRadius, flock.fear);
+    // fear(flock.fearRadius, flock.fear);
 
     if (flock.wrap)
         wrap();

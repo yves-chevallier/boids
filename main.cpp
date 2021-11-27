@@ -54,7 +54,7 @@ public:
     }
 
     void run() {
-        Flock flock(10);
+        Flock flock(100);
 
         while (window.isOpen()) {
             sf::Event event;
