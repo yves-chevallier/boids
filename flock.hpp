@@ -72,8 +72,8 @@ class Flock
 
     unsigned size();
 
-   private:
     std::vector<Boid> boids;
+   private:
 
     void init(unsigned size);
 };

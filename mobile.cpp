@@ -48,7 +48,13 @@ void Mobile::update()
     else
         bounce(speed() * 5.0, speed() / 5.0);
 
+    // Update position
     velocity.limit(max_velocity);
-
     position += velocity;
+
+    // Record previous position
+    if (history.size() > max_history)
+        history.pop_front();
+    
+    history.push_back(position);
 }

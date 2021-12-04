@@ -1,14 +1,18 @@
 #include "vector.hpp"
+#include <deque>
 
 class Mobile {
 protected:
-    Vector position;
-    Vector velocity;
-
     bool wrap;
     float max_velocity;
 
+    std::deque<Vector> history;
+    int max_history;
+
 public:
+    Vector position;
+    Vector velocity;
+
     float angle();
     float speed();
 
