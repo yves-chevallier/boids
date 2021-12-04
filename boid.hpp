@@ -1,34 +1,24 @@
 #pragma once
 
 #include "flock.hpp"
+#include "mobile.hpp"
 #include "vector.hpp"
 
-#include <SFML/Graphics.hpp>
-#include <deque>
 #include <functional>
 
 class Flock;
 
-class Boid {
-    sf::ConvexShape shape;
-    
-    Vector position;
-    Vector velocity;
-
+class Boid : Mobile {   
     int size;
-    int tailLength;
 
     bool isPredator;
-    bool isDead;
-
-    std::deque<sf::Vector2f> tail;
 
     Flock &flock; // Friend reference
 
 public:
-    Boid(Flock &flock, int x=0, int y=0,  bool isPredator=false);
-
-    static sf::ConvexShape getShape();
+    Boid(Flock &flock, bool isPredator=false);
+    Boid(Flock &flock, int x, int y, bool isPredator=false);
+    Boid(Flock &flock, const Vector &position, bool isPredator=false);
 
     /** 
      * Flying rules
@@ -38,26 +28,10 @@ public:
     void separation(float radius, float weight);
     void fear(float radius, float weight);
 
-    /**
-     * Drawing
-     */
-    void compute();
-    void draw(sf::RenderWindow &window);
-
-    /**
-     * Edges
-     */
-    void bounce(float margin, float turnFactor);
-    void wrap();
+    void update();
 
     /**
      * Getters
      */
     int inSight(std::function<const void(Boid &boid)> callback, float radius);
-
-    float distanceTo(Boid &other, bool wrap = false);
-    float angleTo(Boid &other);
-
-    float angle();
-    float speed();
 };

@@ -30,13 +30,6 @@ void Flock::compute()
     }
 }
 
-void Flock::draw(sf::RenderWindow &window)
-{
-    for (auto &boid : boids) {
-        boid.draw(window);
-    }
-}
-
 void Flock::add() {
     boids.push_back(Boid(*this));
 }

@@ -7,54 +7,28 @@
 #include <functional>
 #include <math.h>
 
-Boid::Boid(Flock &flock, int x, int y,  bool isPredator) :
+Boid::Boid(Flock &flock, bool isPredator) :
     flock(flock), 
-    position(x, y),
-    isPredator(isPredator),
-    shape(getShape())
+    isPredator(isPredator)
 {
     position = Vector::random();
     velocity = Vector::random(flock.maxVelocity * 2.0, -flock.maxVelocity);
 }
 
-sf::ConvexShape Boid::getShape() {
-    float size = 1;
-
-    int length = 10 * size;
-    int width = length / 3;
-    sf::ConvexShape shape;
-    shape.setPointCount(3);
-    shape.setPoint(0, sf::Vector2f(0, 0));
-    shape.setPoint(1, sf::Vector2f(-width * size, length * size));
-    shape.setPoint(2, sf::Vector2f(width * size, length * size));
-    shape.setOrigin(0, length / 2 * size);
-    shape.setFillColor(sf::Color(49, 102, 156, 150));
-    shape.setOutlineColor(sf::Color(125, 164, 202, 150));
-    shape.setOutlineThickness(length / 10 * size);
-
-    return shape;
+Boid::Boid(Flock &flock, int x, int y, bool isPredator) :
+    flock(flock), 
+    isPredator(isPredator)
+{
+    position = Vector(x, y),
+    velocity = Vector::random(flock.maxVelocity * 2.0, -flock.maxVelocity);
 }
 
-void Boid::draw(sf::RenderWindow &window) {
-    auto windowSize = window.getSize();
-    sf::Vector2f currentPosition = sf::Vector2f(position.x * windowSize.x, position.y * windowSize.y);
-    shape.setPosition(currentPosition);
-    shape.setRotation(velocity.angle() * 180 / M_PI + 90);
-
-    tail.push_back(currentPosition);
-    if (tail.size() > flock.tailLength)
-        tail.pop_front();
-    
-    sf::LineStrip tailShape;
-    tailShape.setPointCount(tail.size());
-    tailShape.setOutlineColor(sf::Color(125, 164, 202, 150));
-    tailShape.setOutlineThickness(1);
-    for (int i = 0; i < tail.size(); i++) {
-        tailShape.setPoint(i, tail[i]);
-    }
-
-    window.draw(tailShape);
-    window.draw(shape);
+Boid::Boid(Flock &flock, const Vector &position, bool isPredator=false) :
+    flock(flock), 
+    isPredator(isPredator)
+{
+    this->position = position;
+    velocity = Vector::random(flock.maxVelocity * 2.0, -flock.maxVelocity);
 }
 
 /**
@@ -119,47 +93,14 @@ void Boid::fear(float radius, float weight) {
     position.rotate(pos.angle() * weight);
 }
 
-/**
- * The boid would bounce on the edge of the map with
- * a turn factor, at a certain distance (margin) of
- * the edge.
- */
-void Boid::bounce(float margin, float turnFactor)
-{
-    if (position.x < margin) velocity.x += turnFactor;
-    if (position.y < margin) velocity.y += turnFactor;
-    if (position.x > 1.0 - margin) velocity.x -= turnFactor;
-    if (position.y > 1.0 - margin) velocity.y -= turnFactor;
-}
-
-/**
- * The boid suddently appear at the opposite of the map
- * if it crosses the boundaries.
- */
-void Boid::wrap()
-{
-    if (position.x < 0) position.x += 1.0;
-    if (position.y < 0) position.y += 1.0;
-
-    if (position.x > 1.0) position.x -= 1.0;
-    if (position.y > 1.0) position.y -= 1.0;
-}
-
-void Boid::compute()
+void Boid::update()
 {
     cohesion(flock.cohesionRadius, flock.cohesion);
     separation(flock.separationRadius, flock.separation);
     alignment(flock.alignmentRadius, flock.alignment);
     // fear(flock.fearRadius, flock.fear);
 
-    if (flock.wrap)
-        wrap();
-    else
-        bounce(speed() * 5.0, speed() / 5.0);
-
-    velocity.limit(flock.maxVelocity);
-
-    position += velocity;
+    Mobile::update();
 }
 
 int Boid::inSight(std::function<const void(Boid &boid)> callback, float radius)
@@ -178,16 +119,3 @@ int Boid::inSight(std::function<const void(Boid &boid)> callback, float radius)
     return neighbors;
 }
 
-float Boid::speed()
-{
-    return velocity.norm();
-}
-
-float Boid::angle() { return velocity.angle(); }
-float Boid::angleTo(Boid &other) { return position.angle(other.position); }
-
-float Boid::distanceTo(Boid &other, bool wrap)
-{
-    return wrap ? position.toroidal_distance(other.position)
-                : position.distance(other.position);
-}

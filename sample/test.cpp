@@ -23,10 +23,10 @@ sf::VertexArray newShape(int numberOfTriangles) {
         shape.append(v1);
         shape.append(v2);
         shape.append(v3);
-
     }
     return shape;   
 }
+
 //rotate function finds the middle of 3 vertexes and rotates them
 void rotate(sf::VertexArray& array, double angle){
     for (int i=0;i<array.getVertexCount();i+=3){
