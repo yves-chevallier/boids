@@ -248,12 +248,13 @@ class KDTree
 
 void drawTree(Node<Vector> *node, int min, int max, sf::RenderWindow &window)
 {
-    int height = window.getSize().x;
-    int width = window.getSize().y;
-
     if (node == NULL) {
         return;
     }
+
+    std::cout << node->element << " : min(" << min << ") max(" << max << ")"
+              << std::endl;
+
     int radius = 5;
     sf::CircleShape circle(radius);
     circle.setPosition(node->getX() - radius, node->getY() - radius);
@@ -261,24 +262,18 @@ void drawTree(Node<Vector> *node, int min, int max, sf::RenderWindow &window)
     window.draw(circle);
 
     if (node->dim % 2 == 0) {
-        int x = node->getX();
-        int y0 = min;
-        int y1 = max;
         sf::Vertex line[] = {
-            sf::Vertex(sf::Vector2f(x, y0)),
-            sf::Vertex(sf::Vector2f(x, y1)),
+            sf::Vertex(sf::Vector2f(node->getX(), min)),
+            sf::Vertex(sf::Vector2f(node->getX(), max)),
         };
         sf::Color color(200, 50, 30, 100);
         line[0].color = color;
         line[1].color = color;
         window.draw(line, 2, sf::Lines);
     } else {
-        int y = node->getY();
-        int x0 = min;
-        int x1 = max;
         sf::Vertex line[] = {
-            sf::Vertex(sf::Vector2f(x0, y)),
-            sf::Vertex(sf::Vector2f(x1, y)),
+            sf::Vertex(sf::Vector2f(min, node->getY())),
+            sf::Vertex(sf::Vector2f(max, node->getY())),
         };
         sf::Color color(60, 200, 40, 100);
         line[0].color = color;
@@ -287,30 +282,25 @@ void drawTree(Node<Vector> *node, int min, int max, sf::RenderWindow &window)
         window.draw(line, 2, sf::Lines);
     }
 
-    int min0 = min;
-    int max0 = (node->dim % 2 == 0 ? node->getX() : node->getY());
-    drawTree(node->left, min0, max0, window);
-    min0 = (node->dim % 2 == 0 ? node->getX() : node->getY());
-    max0 = max;
-    drawTree(node->right, min0, max0, window);
+    drawTree(node->left, min, node->dim % 2 == 0 ? node->getX() : node->getY(),
+             window);
+    drawTree(node->right, node->dim % 2 == 0 ? node->getX() : node->getY(), max,
+             window);
 }
 int main()
 {
     KDTree<Vector> kd;
-
-
 
     kd.traverse(
         [](Node<Vector> *node) { std::cout << node->element << std::endl; });
 
     sf::RenderWindow window(sf::VideoMode(1000, 1000), "SFML works!");
     sf::Vector2i searchPosition;
-    window.setFramerateLimit(60);
+    window.setFramerateLimit(5);
     while (window.isOpen()) {
         sf::Event event;
 
-        window.clear();
-
+        bool redraw = false;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed) {
                 window.close();
@@ -319,15 +309,20 @@ int main()
             if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
                 auto mouse = sf::Mouse::getPosition(window);
                 kd.insert({(double)mouse.x, (double)mouse.y});
-                    //kd.print();
-
+                // kd.print();
+                redraw = true;
             }
 
             if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
                 searchPosition = sf::Mouse::getPosition(window);
+                redraw = true;
             }
         }
 
+        if (!redraw) {
+            continue;
+        }
+        window.clear();
         if (searchPosition.x == 0 && searchPosition.y == 0) {
             drawTree(kd.getRoot(), 0, 1000, window);
 
