@@ -8,6 +8,13 @@
 #include <cmath>
 
 #include "boid.hpp"
+#include "kd-tree.hpp"
+
+template <>
+struct Position<Boid> {
+    static float getX(Boid const &p) { return p.position.x; }
+    static float getY(Boid const &p) { return p.position.y; }
+};
 
 class Flock
 {
@@ -72,8 +79,10 @@ class Flock
 
     unsigned size();
 
-    std::vector<Boid> boids;
    private:
+
+    KDTree<Boid> kdtree;
+    std::vector<Boid> boids;
 
     void init(unsigned size);
 };

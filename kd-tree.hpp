@@ -1,18 +1,17 @@
+#pragma once
 #include <functional>
 #include <iostream>
 #include <stack>
 #include <vector>
 
-#include "vector.hpp"
-
 template <class Geometry>
 struct Position;
 
-template <>
-struct Position<Vector> {
-    static float getX(Vector const &p) { return p.x; }
-    static float getY(Vector const &p) { return p.y; }
-};
+// template <>
+// struct Position<Vector> {
+//     static float getX(Vector const &p) { return p.x; }
+//     static float getY(Vector const &p) { return p.y; }
+// };
 
 template <typename T>
 struct Node {
@@ -20,7 +19,7 @@ struct Node {
     Node<T> *left, *right;
     int dim;
     Node(T element, int dim = 0)
-        : element(element), left(NULL), right(NULL), dim(dim)
+        : element(element), left(nullptr), right(nullptr), dim(dim)
     {
     }
 
@@ -37,7 +36,7 @@ class KDTree
         double x = Position<T>::getX(element);
         double y = Position<T>::getY(element);
 
-        if (node == NULL) {
+        if (node == nullptr) {
             root = new Node<T>(element);
             return;
         }
@@ -48,7 +47,7 @@ class KDTree
 
         bool comp = node->dim % 2 == 0 ? x < node->getX() : y < node->getY();
         Node<T> **indirect = comp ? &node->left : &node->right;
-        if (*indirect == NULL) {
+        if (*indirect == nullptr) {
             *indirect = new Node<T>(element, node->dim + 1);
             return;
         }
@@ -60,7 +59,7 @@ class KDTree
         double x = Position<T>::getX(element);
         double y = Position<T>::getY(element);
 
-        if (node == NULL) {
+        if (node == nullptr) {
             return;
         }
 
@@ -79,29 +78,29 @@ class KDTree
     }
     void removeNode(Node<T> *node, int id)
     {
-        if (node == NULL) {
+        if (node == nullptr) {
             return;
         }
 
         if (node->id == id) {
-            if (node->left == NULL && node->right == NULL) {
+            if (node->left == nullptr && node->right == nullptr) {
                 delete node;
                 return;
             }
-            if (node->left == NULL) {
+            if (node->left == nullptr) {
                 Node<T> *temp = node->right;
                 delete node;
                 node = temp;
                 return;
             }
-            if (node->right == NULL) {
+            if (node->right == nullptr) {
                 Node<T> *temp = node->left;
                 delete node;
                 node = temp;
                 return;
             }
             Node<T> *temp = node->right;
-            while (temp->left != NULL) {
+            while (temp->left != nullptr) {
                 temp = temp->left;
             }
             node->id = temp->id;
@@ -113,40 +112,41 @@ class KDTree
 
     void clearNode(Node<T> *node)
     {
-        if (node == NULL) return;
+        if (node == nullptr) return;
     }
+
     void traverseNode(Node<T> *node, std::function<void(Node<T> *)> func)
     {
-        if (node == NULL) {
+        if (node == nullptr) {
             return;
         }
         func(node);
-        if (node->left != NULL) {
+        if (node->left != nullptr) {
             traverseNode(node->left, func);
         }
-        if (node->right != NULL) {
+        if (node->right != nullptr) {
             traverseNode(node->right, func);
         }
     }
 
     void print(const std::string &prefix, const Node<T> *node, bool isLeft)
     {
-        if (node == NULL) return;
-        std::cout << prefix << (isLeft ? "├──" : "└──") << node->element
+        if (node == nullptr) return;
+        std::cout << prefix << (isLeft ? "├◐─" : "└◑─") << node->element
                   << std::endl;
         print(prefix + (isLeft ? "│   " : "    "), node->left, true);
         print(prefix + (isLeft ? "│   " : "    "), node->right, false);
     }
 
    public:
-    KDTree() : root(NULL) {}
+    KDTree() : root(nullptr) {}
     void remove(int id) { removeNode(root, id); }
 
     void print() { print("", root, false); }
 
     void insert(T element)
     {
-        if (root == NULL) {
+        if (root == nullptr) {
             root = new Node<T>(element);
             return;
         }
@@ -163,7 +163,7 @@ class KDTree
     std::vector<Vector> traverse()
     {
         std::vector<Vector> points;
-        if (root == NULL) {
+        if (root == nullptr) {
             return points;
         }
         std::vector<Node<T> *> nodes;
@@ -172,10 +172,10 @@ class KDTree
             Node<T> *node = nodes.back();
             nodes.pop_back();
             points.push_back(node->element);
-            if (node->left != NULL) {
+            if (node->left != nullptr) {
                 nodes.push_back(node->left);
             }
-            if (node->right != NULL) {
+            if (node->right != nullptr) {
                 nodes.push_back(node->right);
             }
         }
@@ -218,7 +218,7 @@ class KDTree
             }
 
             if (stack.size() == 0) {
-                node = NULL;
+                node = nullptr;
                 return *this;
             }
 

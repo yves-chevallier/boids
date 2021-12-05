@@ -1,7 +1,7 @@
-CXX=g++
-CPPFLAGS=-std=c++14
-LDFLAGS=-g
-LDLIBS=-lsfml-graphics -lsfml-window -lsfml-system -lpthread
+CXX=clang++
+CPPFLAGS=-std=c++17
+LDFLAGS=-g -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function
+LDLIBS=$(shell pkg-config sfml-graphics --libs)
 
 SRCS=$(wildcard *.cpp)
 OBJS=$(notdir $(SRCS:.cpp=.o))

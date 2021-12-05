@@ -8,7 +8,7 @@
 
 class Flock;
 
-class Boid : Mobile {   
+class Boid : public Mobile {   
     int size;
 
     bool isPredator;

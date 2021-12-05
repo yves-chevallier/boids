@@ -3,6 +3,8 @@
  */
 #include "flock.hpp"
 #include "boid.hpp"
+#include "kd-tree.hpp"
+
 
 Flock::Flock(unsigned size) { init(size); }
 
@@ -25,8 +27,11 @@ void Flock::each(std::function<const void(Boid &boid)> callback)
 
 void Flock::compute()
 {
+    
+    for (auto &boid : boids) tree.insert(boid);
+
     for (auto &boid : boids) {
-        boid.compute();
+        boid.update(;
     }
 }
 
