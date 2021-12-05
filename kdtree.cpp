@@ -5,17 +5,9 @@
 #include <vector>
 
 #include "vector.hpp"
-//#include "mobile.hpp"
 
 template <class Geometry>
 struct Position;
-
-// template <>
-// struct Position<Mobile>
-// {
-//     float getX(Mobile const& p) { return p.position.x; }
-//     float getY(Mobile const& p) { return p.position.y; }
-// };
 
 template <>
 struct Position<Vector> {
@@ -73,25 +65,25 @@ class KDTree
             return;
         }
 
-        // std::cout << "Exploring node " << node->element << std::endl;
-
-        if (node->dim % 2 == 0 ? x - r < node->getX() : y - r < node->getY()) {
+        if (node->dim % 2 == 0 ? x - r < node->getX() : y - r < node->getY()) 
             searchNode(node->left, element, r, ids);
-        }
-        if (node->dim % 2 == 0 ? x + r > node->getX() : y + r > node->getY()) {
+        
+        if (node->dim % 2 == 0 ? x + r > node->getX() : y + r > node->getY()) 
             searchNode(node->right, element, r, ids);
-        }
+        
         double dist = (x - node->getX()) * (x - node->getX()) +
                       (y - node->getY()) * (y - node->getY());
-        if (dist < r * r) {
+
+        if (dist < r * r) 
             ids.push_back(node->element);
-        }
+        
     }
     void removeNode(Node<T> *node, int id)
     {
         if (node == NULL) {
             return;
         }
+
         if (node->id == id) {
             if (node->left == NULL && node->right == NULL) {
                 delete node;
@@ -246,14 +238,17 @@ class KDTree
     Node<T> *getRoot() { return root; }
 };
 
-void drawTree(Node<Vector> *node, int min, int max, sf::RenderWindow &window)
+struct Bounds {
+    double xmin, xmax, ymin, ymax;
+};
+
+
+void drawTree(Node<Vector> *node, Bounds bounds, sf::RenderWindow &window,
+              sf::VertexArray &lines)
 {
     if (node == NULL) {
         return;
     }
-
-    std::cout << node->element << " : min(" << min << ") max(" << max << ")"
-              << std::endl;
 
     int radius = 5;
     sf::CircleShape circle(radius);
@@ -261,32 +256,54 @@ void drawTree(Node<Vector> *node, int min, int max, sf::RenderWindow &window)
     circle.setFillColor(sf::Color::Red);
     window.draw(circle);
 
+    // sf::Font font;
+    // font.loadFromFile("assets/consola.ttf");
+    // sf::Text text((std::string)node->element, font, 15);
+    // text.setFillColor(sf::Color(150, 150, 150));
+    // text.setPosition(node->getX() + radius + 10, node->getY());
+    // window.draw(text);
+    
+    sf::Vertex a, b;
     if (node->dim % 2 == 0) {
-        sf::Vertex line[] = {
-            sf::Vertex(sf::Vector2f(node->getX(), min)),
-            sf::Vertex(sf::Vector2f(node->getX(), max)),
-        };
-        sf::Color color(200, 50, 30, 100);
-        line[0].color = color;
-        line[1].color = color;
-        window.draw(line, 2, sf::Lines);
+        a.position = sf::Vector2f(node->getX(), bounds.ymin);
+        b.position = sf::Vector2f(node->getX(), bounds.ymax);
+        a.color = b.color = sf::Color(200, 50, 30, 100);
     } else {
-        sf::Vertex line[] = {
-            sf::Vertex(sf::Vector2f(min, node->getY())),
-            sf::Vertex(sf::Vector2f(max, node->getY())),
-        };
-        sf::Color color(60, 200, 40, 100);
-        line[0].color = color;
-        line[1].color = color;
-
-        window.draw(line, 2, sf::Lines);
+        a.position = sf::Vector2f(bounds.xmin, node->getY());
+        b.position = sf::Vector2f(bounds.xmax, node->getY());
+        a.color = b.color = sf::Color(60, 200, 40, 100);
     }
+    lines.append(a);
+    lines.append(b);
 
-    drawTree(node->left, min, node->dim % 2 == 0 ? node->getX() : node->getY(),
-             window);
-    drawTree(node->right, node->dim % 2 == 0 ? node->getX() : node->getY(), max,
-             window);
+    {
+        auto b = bounds;
+        if (node->dim % 2 == 0)
+            b.xmax = node->getX();
+        else
+            b.ymax = node->getY();
+        drawTree(node->left, b, window, lines);
+    }
+    {
+        auto b = bounds;
+        if (node->dim % 2 == 0)
+            b.xmin = node->getX();
+        else
+            b.ymin = node->getY();
+
+        drawTree(node->right, b, window, lines);
+    }
 }
+
+void drawTree(KDTree<Vector> &kd, sf::RenderWindow &window)
+{
+    Bounds bounds(
+        {0, (double)window.getSize().x, 0, (double)window.getSize().y});
+    sf::VertexArray lines(sf::Lines);
+    drawTree(kd.getRoot(), bounds, window, lines);
+    window.draw(lines);
+}
+
 int main()
 {
     KDTree<Vector> kd;
@@ -296,7 +313,29 @@ int main()
 
     sf::RenderWindow window(sf::VideoMode(1000, 1000), "SFML works!");
     sf::Vector2i searchPosition;
-    window.setFramerateLimit(5);
+    sf::Color background(40, 44, 52);
+    window.setFramerateLimit(60);
+    window.clear(background);
+
+    sf::Font font;
+    font.loadFromFile("assets/collegiate.ttf");
+    {
+        sf::Text text("KD Tree Demonstration", font, 60);
+        text.setPosition(
+            window.getSize().x / 2 - text.getGlobalBounds().width / 2,
+            window.getSize().y / 2 - 2 * text.getGlobalBounds().height / 2);
+        text.setFillColor(sf::Color(150, 150, 150));
+        window.draw(text);
+    }
+    {
+        sf::Text text("Click anywhere to add an element", font, 30);
+        text.setPosition(
+            window.getSize().x / 2 - text.getGlobalBounds().width / 2,
+            window.getSize().y / 2 - text.getGlobalBounds().height / 2 + 100);
+        text.setFillColor(sf::Color(150, 150, 150));
+        window.draw(text);
+    }
+    window.display();
     while (window.isOpen()) {
         sf::Event event;
 
@@ -322,10 +361,9 @@ int main()
         if (!redraw) {
             continue;
         }
-        window.clear();
+        window.clear(background);
         if (searchPosition.x == 0 && searchPosition.y == 0) {
-            drawTree(kd.getRoot(), 0, 1000, window);
-
+            drawTree(kd, window);
             window.display();
             continue;
         }
@@ -337,7 +375,7 @@ int main()
         auto col = sf::Color(100, 90, 200, 90);
         search.setFillColor(col);
         window.draw(search);
-        drawTree(kd.getRoot(), 0, 1000, window);
+        drawTree(kd, window);
 
         for (auto &e :
              kd.search({(double)searchPosition.x, (double)searchPosition.y},
