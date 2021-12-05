@@ -347,7 +347,7 @@ int main()
         for (auto &e :
              kd.search({(double)searchPosition.x, (double)searchPosition.y},
                        radius)) {
-            int radius = 5.5f;
+            int radius = 5;
             sf::CircleShape shape(radius);
             auto col = sf::Color(100, 90, 200, 255);
             shape.setFillColor(col);
