@@ -1,5 +1,7 @@
+#include <SFML/Graphics.hpp>
 #include <functional>
 #include <iostream>
+#include <stack>
 #include <vector>
 
 #include "vector.hpp"
@@ -25,7 +27,11 @@ template <typename T>
 struct Node {
     T element;
     Node<T> *left, *right;
-    Node(T element) : element(element), left(NULL), right(NULL) {}
+    int dim;
+    Node(T element, int dim = 0)
+        : element(element), left(NULL), right(NULL), dim(dim)
+    {
+    }
 
     double getX() { return Position<T>::getX(element); }
     double getY() { return Position<T>::getY(element); }
@@ -48,10 +54,11 @@ class KDTree
         if (node->element == element) {
             return;
         }
-        
-        Node<T> **indirect = node->getX() < x ? &node->right : &node->left;
+
+        bool comp = node->dim % 2 == 0 ? x < node->getX() : y < node->getY();
+        Node<T> **indirect = comp ? &node->left : &node->right;
         if (*indirect == NULL) {
-            *indirect = new Node<T>(element);
+            *indirect = new Node<T>(element, node->dim + 1);
             return;
         }
         insertNode(*indirect, element);
@@ -65,15 +72,19 @@ class KDTree
         if (node == NULL) {
             return;
         }
-        if (node->getX() < x) {
+
+        // std::cout << "Exploring node " << node->element << std::endl;
+
+        if (node->dim % 2 == 0 ? x - r < node->getX() : y - r < node->getY()) {
+            searchNode(node->left, element, r, ids);
+        }
+        if (node->dim % 2 == 0 ? x + r > node->getX() : y + r > node->getY()) {
             searchNode(node->right, element, r, ids);
         }
-        if (node->getX() - r <= x && node->getY() - r <= y &&
-            node->getX() + r >= x && node->getY() + r >= y) {
-            ids.push_back(element);
-        }
-        if (node->getX() > x) {
-            searchNode(node->left, element, r, ids);
+        double dist = (x - node->getX()) * (x - node->getX()) +
+                      (y - node->getY()) * (y - node->getY());
+        if (dist < r * r) {
+            ids.push_back(node->element);
         }
     }
     void removeNode(Node<T> *node, int id)
@@ -118,30 +129,29 @@ class KDTree
         if (node == NULL) {
             return;
         }
+        func(node);
         if (node->left != NULL) {
-            func(node->left);
             traverseNode(node->left, func);
         }
         if (node->right != NULL) {
-            func(node->right);
-            traverseNode(node->left, func);
+            traverseNode(node->right, func);
         }
     }
-    void print(const std::string& prefix, const Node<T>* node, bool isLeft)
+
+    void print(const std::string &prefix, const Node<T> *node, bool isLeft)
     {
         if (node == NULL) return;
-        std::cout << prefix << (isLeft ? "├──" : "└──") << node->element << std::endl;
+        std::cout << prefix << (isLeft ? "├──" : "└──") << node->element
+                  << std::endl;
         print(prefix + (isLeft ? "│   " : "    "), node->left, true);
         print(prefix + (isLeft ? "│   " : "    "), node->right, false);
     }
+
    public:
     KDTree() : root(NULL) {}
     void remove(int id) { removeNode(root, id); }
 
-    void print()
-    {
-        print("", root, false);
-    }
+    void print() { print("", root, false); }
 
     void insert(T element)
     {
@@ -170,7 +180,7 @@ class KDTree
         while (nodes.size() > 0) {
             Node<T> *node = nodes.back();
             nodes.pop_back();
-            points.push_back(node->point);
+            points.push_back(node->element);
             if (node->left != NULL) {
                 nodes.push_back(node->left);
             }
@@ -190,39 +200,173 @@ class KDTree
     {
        public:
         Node<T> *node;
-        iterator(Node<T> *node) : node(node) {}
+        std::stack<Node<T> *> stack;
+
+        iterator(Node<T> *node) : node(node)
+        {
+            auto root = node;
+
+            if (root != nullptr) {
+                stack.push(node);
+                root = root->left;
+            }
+
+            if (stack.size() > 0) {
+                node = stack.top();
+                stack.pop();
+            } else {
+                node = nullptr;
+            }
+        }
         iterator &operator++()
         {
-            node = node->right;
-            while (node->left) node = node->left;
+            if (node->right) {
+                stack.push(node->right);
+
+                if (node->right->left) stack.push(node->right->left);
+            }
+
+            if (stack.size() == 0) {
+                node = NULL;
+                return *this;
+            }
+
+            node = stack.top();
+            stack.pop();
+
             return *this;
         }
         bool operator!=(const iterator &other) { return node != other.node; }
-        Vector operator*() { return node->point; }
+        T operator*() { return node->element; }
     };
 
-    iterator begin()
-    {
-        Node<T> *node = root;
-        while (node->left) node = node->left;
-        return iterator(node);
-    }
-    iterator end() { return iterator(NULL); }
+    iterator begin() { return iterator(root); }
+    iterator end() { return iterator(nullptr); }
+
+    Node<T> *getRoot() { return root; }
 };
 
+void drawTree(Node<Vector> *node, int min, int max, sf::RenderWindow &window)
+{
+    int height = window.getSize().x;
+    int width = window.getSize().y;
+
+    if (node == NULL) {
+        return;
+    }
+    int radius = 5;
+    sf::CircleShape circle(radius);
+    circle.setPosition(node->getX() - radius, node->getY() - radius);
+    circle.setFillColor(sf::Color::Red);
+    window.draw(circle);
+
+    if (node->dim % 2 == 0) {
+        int x = node->getX();
+        int y0 = min;
+        int y1 = max;
+        sf::Vertex line[] = {
+            sf::Vertex(sf::Vector2f(x, y0)),
+            sf::Vertex(sf::Vector2f(x, y1)),
+        };
+        sf::Color color(200, 50, 30, 100);
+        line[0].color = color;
+        line[1].color = color;
+        window.draw(line, 2, sf::Lines);
+    } else {
+        int y = node->getY();
+        int x0 = min;
+        int x1 = max;
+        sf::Vertex line[] = {
+            sf::Vertex(sf::Vector2f(x0, y)),
+            sf::Vertex(sf::Vector2f(x1, y)),
+        };
+        sf::Color color(60, 200, 40, 100);
+        line[0].color = color;
+        line[1].color = color;
+
+        window.draw(line, 2, sf::Lines);
+    }
+
+    int min0 = min;
+    int max0 = (node->dim % 2 == 0 ? node->getX() : node->getY());
+    drawTree(node->left, min0, max0, window);
+    min0 = (node->dim % 2 == 0 ? node->getX() : node->getY());
+    max0 = max;
+    drawTree(node->right, min0, max0, window);
+}
 int main()
 {
     KDTree<Vector> kd;
-    kd.insert({7, 2});
-    kd.insert({5, 4});
-    kd.insert({9, 6});
-    kd.insert({2, 3});
-    kd.insert({4, 7});
-    kd.insert({8, 1});
+    // kd.insert({7, 2});
+    // kd.insert({5, 4});
+    // kd.insert({9, 6});
+    // kd.insert({2, 3});
+    // kd.insert({4, 7});
+    // kd.insert({8, 1});
+    // kd.insert({9, 10});
+    // kd.insert({4, 3});
+    // kd.insert({8, 1});
+    // kd.insert({1, 8});
 
     kd.print();
 
-    for (auto k : kd.search(Vector(2, 2), 5)) {
-        std::cout << k << std::endl;
+    // for (auto k : kd.search({0, 0}, 5)) {
+    //     std::cout << k << std::endl;
+    // }
+
+    kd.traverse(
+        [](Node<Vector> *node) { std::cout << node->element << std::endl; });
+
+    sf::RenderWindow window(sf::VideoMode(1000, 1000), "SFML works!");
+    sf::Vector2i searchPosition;
+    window.setFramerateLimit(60);
+    while (window.isOpen()) {
+        sf::Event event;
+
+        window.clear();
+
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed) {
+                window.close();
+            }
+
+            if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+                auto mouse = sf::Mouse::getPosition(window);
+                kd.insert({(double)mouse.x, (double)mouse.y});
+            }
+
+            if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
+                searchPosition = sf::Mouse::getPosition(window);
+            }
+        }
+
+        if (searchPosition.x == 0 && searchPosition.y == 0) {
+            drawTree(kd.getRoot(), 0, 1000, window);
+
+            window.display();
+            continue;
+        }
+
+        int radius = 150.0f;
+        sf::CircleShape search(radius);
+        search.setPosition(searchPosition.x - radius,
+                           searchPosition.y - radius);
+        auto col = sf::Color(100, 90, 200, 90);
+        search.setFillColor(col);
+        window.draw(search);
+        drawTree(kd.getRoot(), 0, 1000, window);
+
+        for (auto &e :
+             kd.search({(double)searchPosition.x, (double)searchPosition.y},
+                       radius)) {
+            int radius = 5.5f;
+            sf::CircleShape shape(radius);
+            auto col = sf::Color(100, 90, 200, 255);
+            shape.setFillColor(col);
+            shape.setPosition(e.x - radius, e.y - radius);
+            window.draw(shape);
+        }
+
+        window.display();
     }
 }
