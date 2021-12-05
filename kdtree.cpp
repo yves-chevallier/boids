@@ -319,7 +319,7 @@ int main()
             if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
                 auto mouse = sf::Mouse::getPosition(window);
                 kd.insert({(double)mouse.x, (double)mouse.y});
-                    kd.print();
+                    //kd.print();
 
             }
 
