@@ -297,22 +297,8 @@ void drawTree(Node<Vector> *node, int min, int max, sf::RenderWindow &window)
 int main()
 {
     KDTree<Vector> kd;
-    // kd.insert({7, 2});
-    // kd.insert({5, 4});
-    // kd.insert({9, 6});
-    // kd.insert({2, 3});
-    // kd.insert({4, 7});
-    // kd.insert({8, 1});
-    // kd.insert({9, 10});
-    // kd.insert({4, 3});
-    // kd.insert({8, 1});
-    // kd.insert({1, 8});
 
-    kd.print();
 
-    // for (auto k : kd.search({0, 0}, 5)) {
-    //     std::cout << k << std::endl;
-    // }
 
     kd.traverse(
         [](Node<Vector> *node) { std::cout << node->element << std::endl; });
@@ -333,6 +319,8 @@ int main()
             if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
                 auto mouse = sf::Mouse::getPosition(window);
                 kd.insert({(double)mouse.x, (double)mouse.y});
+                    kd.print();
+
             }
 
             if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
