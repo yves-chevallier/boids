@@ -2,58 +2,81 @@
 #include <iostream>
 #include <vector>
 
-using Vector = std::pair<double, double>;
+#include "vector.hpp"
+//#include "mobile.hpp"
+
+template <class Geometry>
+struct Position;
+
+// template <>
+// struct Position<Mobile>
+// {
+//     float getX(Mobile const& p) { return p.position.x; }
+//     float getY(Mobile const& p) { return p.position.y; }
+// };
+
+template <>
+struct Position<Vector> {
+    static float getX(Vector const &p) { return p.x; }
+    static float getY(Vector const &p) { return p.y; }
+};
 
 template <typename T>
 struct Node {
-    int id;
     T element;
-    Node *left, *right;
-    Node(T element) : element(element), left(NULL), right(NULL)
-    {
-        static int id = 0;
-        this->id = id++;
-    }
+    Node<T> *left, *right;
+    Node(T element) : element(element), left(NULL), right(NULL) {}
+
+    double getX() { return Position<T>::getX(element); }
+    double getY() { return Position<T>::getY(element); }
 };
 
 template <typename T>
 class KDTree
 {
-    Node *root;
-    void insertNode(Node *node, int id, double x, double y)
+    Node<T> *root;
+    void insertNode(Node<T> *node, T element)
     {
+        double x = Position<T>::getX(element);
+        double y = Position<T>::getY(element);
+
         if (node == NULL) {
-            root = new Node(id, x, y);
+            root = new Node<T>(element);
             return;
         }
-        if (node->point.first == x && node->point.second == y) {
+
+        if (node->element == element) {
             return;
         }
-        Node **indirect = node->point.first < x ? &node->right : &node->left;
+        
+        Node<T> **indirect = node->getX() < x ? &node->right : &node->left;
         if (*indirect == NULL) {
-            *indirect = new Node(id, x, y);
+            *indirect = new Node<T>(element);
             return;
         }
-        insertNode(*indirect, id, x, y);
+        insertNode(*indirect, element);
     }
-    void searchNode(Node *node, double x, double y, double r,
-                    std::vector<int> &ids)
+
+    void searchNode(Node<T> *node, T element, double r, std::vector<T> &ids)
     {
+        double x = Position<T>::getX(element);
+        double y = Position<T>::getY(element);
+
         if (node == NULL) {
             return;
         }
-        if (node->point.first < x) {
-            searchNode(node->right, x, y, r, ids);
+        if (node->getX() < x) {
+            searchNode(node->right, element, r, ids);
         }
-        if (node->point.first - r <= x && node->point.second - r <= y &&
-            node->point.first + r >= x && node->point.second + r >= y) {
-            ids.push_back(node->id);
+        if (node->getX() - r <= x && node->getY() - r <= y &&
+            node->getX() + r >= x && node->getY() + r >= y) {
+            ids.push_back(element);
         }
-        if (node->point.first > x) {
-            searchNode(node->left, x, y, r, ids);
+        if (node->getX() > x) {
+            searchNode(node->left, element, r, ids);
         }
     }
-    void removeNode(Node *node, int id)
+    void removeNode(Node<T> *node, int id)
     {
         if (node == NULL) {
             return;
@@ -64,18 +87,18 @@ class KDTree
                 return;
             }
             if (node->left == NULL) {
-                Node *temp = node->right;
+                Node<T> *temp = node->right;
                 delete node;
                 node = temp;
                 return;
             }
             if (node->right == NULL) {
-                Node *temp = node->left;
+                Node<T> *temp = node->left;
                 delete node;
                 node = temp;
                 return;
             }
-            Node *temp = node->right;
+            Node<T> *temp = node->right;
             while (temp->left != NULL) {
                 temp = temp->left;
             }
@@ -83,14 +106,14 @@ class KDTree
             removeNode(node->right, temp->id);
             return;
         }
-        removeNode(node->point.first < id ? node->right : node->left, id);
+        removeNode(node->getX() < id ? node->right : node->left, id);
     }
 
-    void clearNode(Node *node)
+    void clearNode(Node<T> *node)
     {
         if (node == NULL) return;
     }
-    void traverseNode(Node *node, std::function<void(Node *)> func)
+    void traverseNode(Node<T> *node, std::function<void(Node<T> *)> func)
     {
         if (node == NULL) {
             return;
@@ -104,23 +127,34 @@ class KDTree
             traverseNode(node->left, func);
         }
     }
-
+    void print(const std::string& prefix, const Node<T>* node, bool isLeft)
+    {
+        if (node == NULL) return;
+        std::cout << prefix << (isLeft ? "├──" : "└──") << node->element << std::endl;
+        print(prefix + (isLeft ? "│   " : "    "), node->left, true);
+        print(prefix + (isLeft ? "│   " : "    "), node->right, false);
+    }
    public:
     KDTree() : root(NULL) {}
     void remove(int id) { removeNode(root, id); }
 
-    void insert(int id, double x, double y)
+    void print()
+    {
+        print("", root, false);
+    }
+
+    void insert(T element)
     {
         if (root == NULL) {
-            root = new Node(id, x, y);
+            root = new Node<T>(element);
             return;
         }
-        insertNode(root, id, x, y);
+        insertNode(root, element);
     }
-    std::vector<int> search(double x, double y, double r)
+    std::vector<T> search(T element, double r)
     {
-        std::vector<int> ids;
-        searchNode(root, x, y, r, ids);
+        std::vector<T> ids;
+        searchNode(root, element, r, ids);
         return ids;
     }
     void clear() { clearNode(root); }
@@ -131,10 +165,10 @@ class KDTree
         if (root == NULL) {
             return points;
         }
-        std::vector<Node *> nodes;
+        std::vector<Node<T> *> nodes;
         nodes.push_back(root);
         while (nodes.size() > 0) {
-            Node *node = nodes.back();
+            Node<T> *node = nodes.back();
             nodes.pop_back();
             points.push_back(node->point);
             if (node->left != NULL) {
@@ -146,16 +180,17 @@ class KDTree
         }
         return points;
     }
-    void traverse(std::function<void(Node *)> func)
+
+    void traverse(std::function<void(Node<T> *)> func)
     {
         traverseNode(root, func);
     }
 
-    class iterator : public std::iterator<std::input_iterator_tag, Node>
+    class iterator : public std::iterator<std::input_iterator_tag, Node<T> >
     {
        public:
-        Node *node;
-        iterator(Node *node) : node(node) {}
+        Node<T> *node;
+        iterator(Node<T> *node) : node(node) {}
         iterator &operator++()
         {
             node = node->right;
@@ -168,9 +203,26 @@ class KDTree
 
     iterator begin()
     {
-        Node *node = root;
+        Node<T> *node = root;
         while (node->left) node = node->left;
         return iterator(node);
     }
     iterator end() { return iterator(NULL); }
 };
+
+int main()
+{
+    KDTree<Vector> kd;
+    kd.insert({7, 2});
+    kd.insert({5, 4});
+    kd.insert({9, 6});
+    kd.insert({2, 3});
+    kd.insert({4, 7});
+    kd.insert({8, 1});
+
+    kd.print();
+
+    for (auto k : kd.search(Vector(2, 2), 5)) {
+        std::cout << k << std::endl;
+    }
+}

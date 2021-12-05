@@ -7,28 +7,22 @@
 #include <functional>
 #include <math.h>
 
-Boid::Boid(Flock &flock, bool isPredator) :
-    flock(flock), 
-    isPredator(isPredator)
-{
-    position = Vector::random();
-    velocity = Vector::random(flock.maxVelocity * 2.0, -flock.maxVelocity);
-}
-
-Boid::Boid(Flock &flock, int x, int y, bool isPredator) :
-    flock(flock), 
-    isPredator(isPredator)
-{
-    position = Vector(x, y),
-    velocity = Vector::random(flock.maxVelocity * 2.0, -flock.maxVelocity);
-}
-
 Boid::Boid(Flock &flock, const Vector &position, bool isPredator=false) :
     flock(flock), 
     isPredator(isPredator)
 {
     this->position = position;
     velocity = Vector::random(flock.maxVelocity * 2.0, -flock.maxVelocity);
+}
+
+Boid::Boid(Flock &flock, int x, int y, bool isPredator) :
+    Boid(flock, Vector(x, y), isPredator)
+{
+}
+
+Boid::Boid(Flock &flock, bool isPredator) :
+    Boid(flock, Vector::random(), isPredator)
+{
 }
 
 /**
@@ -95,9 +89,9 @@ void Boid::fear(float radius, float weight) {
 
 void Boid::update()
 {
-    cohesion(flock.cohesionRadius, flock.cohesion);
-    separation(flock.separationRadius, flock.separation);
-    alignment(flock.alignmentRadius, flock.alignment);
+    // cohesion(flock.cohesionRadius, flock.cohesion);
+    // separation(flock.separationRadius, flock.separation);
+    // alignment(flock.alignmentRadius, flock.alignment);
     // fear(flock.fearRadius, flock.fear);
 
     Mobile::update();

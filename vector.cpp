@@ -3,6 +3,8 @@
  */
 #include "vector.hpp"
 
+#include <sstream>
+#include <string>
 #include <cmath>
 
 Vector::Vector() : x{0}, y{0} {}
@@ -90,6 +92,15 @@ Vector &Vector::operator-=(Vector Vector)
     return *this;
 }
 
+bool Vector::operator==(const Vector &vector) const {
+    return (x == vector.x) && (y == vector.y);
+}
+
+bool Vector::operator!=(const Vector &vector) const {
+    return x != vector.x || y != vector.y;
+}
+
+
 double Vector::norm() const
 {
     return sqrt(x * x + y * y);
@@ -167,14 +178,18 @@ double Vector::angle(const Vector &other) const
 
 static double frand() { return (double)rand() / RAND_MAX; }
 
-Vector::operator std::string() const
-{
-    char buff[64];
-    snprintf(buff, sizeof(buff), "(%.2f, %.2f)", x, y);
-    return std::string(buff);
-}
-
 Vector Vector::random(double max, double offset)
 {
     return Vector(frand() * max + offset, frand() * max + offset);
+}
+
+Vector::operator std::string () const { 
+    std::stringstream ss;
+    ss << "(" << x << ", " << y << ")";
+    return ss.str();;
+}
+
+std::ostream &operator<<(std::ostream &os, const Vector &vector) {
+    os << static_cast<std::string>(vector);
+    return os;
 }

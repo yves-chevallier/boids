@@ -173,4 +173,3 @@ void ExtendedColor::setLuminance(double luminance)
     this->g = color.g;
     this->b = color.b;
 }
-

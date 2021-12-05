@@ -30,6 +30,10 @@ public:
     Vector &operator-=(double scalar);
     Vector &operator-=(Vector Vector);
 
+    bool operator==(const Vector& vector) const;
+    bool operator!=(const Vector& vector) const;
+
+
     void fmod(double mod);
 
     Vector &normalize();
@@ -43,7 +47,9 @@ public:
     double angle() const;
     double angle(const Vector &other) const;
 
-    operator std::string() const;
-
     static Vector random(double max = 1.0, double offset = 0.0);
+
+    operator std::string () const;
+    friend std::ostream &operator<<(std::ostream &os, const Vector &vector);
 };
+
